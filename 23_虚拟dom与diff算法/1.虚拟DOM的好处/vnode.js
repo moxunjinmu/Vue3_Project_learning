@@ -28,6 +28,7 @@ let vnode = h('ul#list', {}, [
 // 获取按钮id
 const btn = document.querySelector('#btn')
 
+// 首次加载渲染dom节点
 // vnode -> 空容器
 patch(container, vnode)
 
