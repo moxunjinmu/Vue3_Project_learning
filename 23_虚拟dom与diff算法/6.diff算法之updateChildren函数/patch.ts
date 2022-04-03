@@ -18,6 +18,77 @@ function updateChildren( parentElm: Vnode,
     let idxInOld: number
     let elmToMove: VNode
     let before: any
+
+    while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+      if(oldStartVnode == null) {
+        oldStartVnode = oldCh[++oldStartIdx]
+      } else if (oldEndVnode == null){
+        oldEndVnode = oldCh[--oldEndIdx]
+      }else if(newStartVnode == null) {
+        newStartVnode = newCh[++newStartIdx]
+      }else if (newEndVnode == null) {
+        newEndVnode = newCh[--newEndIdx]
+      }
+      // 老开始和新开始对比
+      else if (sameVnode(oldStartVnode, newStartVnode)) {
+        patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue)
+        oldStartVnode = oldCh[++oldStartIdx]
+        newStartVnode = newCh[++newStartIdx]
+      }
+      // 老结尾和新结尾对比
+      else if (sameVnode(oldEndVnode, newEndVnode)) {
+        patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue)
+        oldEndVnode = oldCh[--oldEndIdx]
+        newEndVnode = newCh[--newEndIdx]
+      }
+      // 老开始和新结尾对比
+      else if (sameVnode(oldStartVnode, newEndVnode)) {
+        patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue)
+        api.insertBefore(parentElm, oldStartVnode.elm!, api.nextSibling(oldEndVnode.elm!))
+        oldStartVnode = oldCh[++oldStartIdx]
+        newEndVnode = newCh[--newEndIdx]
+      }
+      // 老结尾和新开始对比
+      else if (sameVnode(oldEndVnode, newStartVnode)) {
+        patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue)
+        api.insertBefore(parentElm, oldEndVnode.elm!, oldStartVnode.elm!)
+        oldEndVnode = oldCh[--oldEndIdx]
+        newStartVnode = newCh[++newStartIdx]
+      }
+
+      else {
+        if (oldKeyToIdx === undefined){
+          oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+        }
+
+        // 拿到新开始的key， 在老children里去找有没有某个节点有对应这个key
+        idxInOld = oldKeyToIdx[newStartVnode.key as string]
+        // 么有在老children里找到对应的key
+        if(idUndef(idxInOld)){
+          api.insertBefore(parentElm, createElm(newStartVnode, insertedVnodeQueue), oldStartVnode.elm!)
+        }
+
+        // 在老children找到对应的
+        else {
+          elmToMove = oldCh[idxInOld]
+
+          // 判断tag是否相等
+          if(elmToMove.sel !== newStartVnode.sel) {
+            // tag不相等
+            api.insertBefore(parentElm, createElm(newStartVnode, insertedVnodeQueue), oldStartVnode.elm!)
+          }
+
+          else{
+            // tag相等
+            patchVnode(elmToMove, newStartVnode, insertedVnodeQueue)
+            oldCh[idxInOld] = undefined as any
+            api.insertBefore(parentElm, elmToMove.elm!, oldStartVnode.elm!)
+          }
+        }
+
+        newStartVnode = newCh[++newStartIdx]
+      }
+    }
   }
 
 
